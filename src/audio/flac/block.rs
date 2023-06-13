@@ -77,13 +77,24 @@ impl BlockData {
 
         let mut min_frame_buf = [0u8; 4];
         min_frame_buf[1..].copy_from_slice(&buf[4..7]);
-        let minimum_frame_size = u32::from_be_bytes(min_frame_buf);
+        let min_frame_size = u32::from_be_bytes(min_frame_buf);
         
         let mut max_frame_buf = [0u8; 4];
         max_frame_buf[1..].copy_from_slice(&buf[7..10]);
-        let maximum_frame_size = u32::from_be_bytes(max_frame_buf);
+        let max_frame_size = u32::from_be_bytes(max_frame_buf);
 
-        dbg!(min_block_size, max_block_size, minimum_frame_size, maximum_frame_size);
+        let sample_rate_part = u16::from_be_bytes(buf[10..12].try_into().unwrap());
+        let sample_ch_bps_part = u8::from_be_bytes([buf[12]]);
+        let sample_rate = ((sample_rate_part as u32) << 4) | (sample_ch_bps_part as u32 >> 4);
+        let channels = (sample_ch_bps_part >> 1) & 0b0000111;
+        // let mut sample_rate_buf = [0u8; 4];
+        // sample_rate_buf[1..].copy_from_slice(&buf[10..13]);
+        // let sample_rate = u32::from_be_bytes(sample_rate_buf);
+
+        // let channels = (u8::from_be_bytes([buf[13]]) >> 5) + 1;
+        let bits_per_sample = (u8::from_be_bytes([buf[13]]) & 0b1110000) + 1;
+
+        dbg!(min_block_size, max_block_size, min_frame_size, max_frame_size, sample_rate, channels, bits_per_sample);
         todo!()
     }
 }
