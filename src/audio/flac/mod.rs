@@ -1,44 +1,12 @@
+pub mod block;
+
 use std::{io::{Read, self}, error::Error, fs, ops::{Deref, DerefMut}};
 
-pub enum BlockType {
-    STREAMINFO,
-    PADDING,
-    APPLICATION,
-    SEEKTABLE,
-    VORBIS_COMMENT,
-    CUESHEET,
-    PICTURE
-}
+use self::block::{BlockHeader, BlockData, MetadataBlock};
+
 
 pub struct Flac {
     buffer: Vec<u8>
-}
-
-pub struct StreamInfo {
-    min_block_size: u16,
-    max_block_size: u16,
-    min_frame_size: u32,
-    max_frame_size: u32,
-    sample_rate: u32,
-    channels: u8,
-    bits_per_sample: u8,
-    samples: u64,
-    md5: Vec<u8>
-}
-
-pub struct FlacMetadataBlock {
-    header: FlacMetadataBlockHeader,
-    data: FlacMetadataBlockData
-}
-
-pub struct FlacMetadataBlockHeader {
-    last_block: bool,
-    block_type: BlockType,
-    len: u32
-}
-
-pub struct FlacMetadataBlockData {
-    data: Vec<u8>
 }
 
 pub struct FlacStream(fs::File);
@@ -58,21 +26,36 @@ impl From<fs::File> for FlacStream {
         Self(value)
     }
 }
+impl FlacStream {
+    pub fn read(&mut self, size: usize) -> Vec<u8> {
+        let mut buf = vec![0u8; size];
+        self.0.read_exact(&mut buf).unwrap();
+        buf
+    }
+}
 
 impl Flac {
     pub fn load(mut stream: FlacStream) -> Result<Flac, Box<dyn Error>> {
-        let mut magic_buf = [0u8; 4];
-        stream.read(&mut magic_buf)?;
+        let magic_buf = stream.read(4);
+        let magic_buf = dbg!(magic_buf);
         if magic_buf != [0x66, 0x4C, 0x61, 0x43] {
             return Err("Provided file is not FLAC.".into());
         }
         println!("Is FLAC");
 
-        Flac::parse(stream);
+        Flac::parse_block(stream);
         todo!()
     }
 
-    fn parse(mut stream: FlacStream) {
+    fn parse_block(mut stream: FlacStream) -> Result<MetadataBlock, Box<dyn Error>> {
+        let mut header_buf = stream.read(4);
+        // stream.read(&mut header_buf)?;
+        let header = BlockHeader::parse(header_buf);
+        
+        let mut data_buf = stream.read(header.len as usize);
+        let data = BlockData::parse(data_buf, header.block_type);
+
+        
 
         todo!()
     }
@@ -81,3 +64,4 @@ impl Flac {
 
     }
 }
+
