@@ -43,21 +43,22 @@ impl Flac {
         }
         println!("Is FLAC");
 
-        Flac::parse_block(stream);
+        Flac::parse_block(&mut stream);
+        Flac::parse_block(&mut stream);
+        Flac::parse_block(&mut stream);
         todo!()
     }
 
-    fn parse_block(mut stream: FlacStream) -> Result<MetadataBlock, Box<dyn Error>> {
-        let mut header_buf = stream.read(4);
-        // stream.read(&mut header_buf)?;
+    fn parse_block(stream: &mut FlacStream) -> Result<MetadataBlock, Box<dyn Error>> {
+        let header_buf = stream.read(4);
         let header = BlockHeader::parse(header_buf);
         
-        let mut data_buf = stream.read(header.len as usize);
+        let data_buf = stream.read(header.len as usize);
         let data = BlockData::parse(data_buf, header.block_type);
 
-        
-        
-        todo!()
+        Ok(MetadataBlock {
+            header, data
+        })
     }
 
     fn load_metadata(&mut self) {
