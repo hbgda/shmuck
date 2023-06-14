@@ -1,4 +1,5 @@
 use std::{ops::Deref, collections::HashMap};
+use super::meta::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum BlockType {
@@ -13,28 +14,10 @@ pub enum BlockType {
 }
 
 #[derive(Debug)]
-pub struct StreamInfo {
-    min_block_size: u16,
-    max_block_size: u16,
-    min_frame_size: u32,
-    max_frame_size: u32,
-    sample_rate: u32,
-    channels: u8,
-    bits_per_sample: u8,
-    samples: u64,
-    md5: u128
-}
-
-#[derive(Debug)]
-pub struct VorbisComment {
-    vendor_string: String,
-    comments: HashMap<String, Vec<String>>
-}
-
-#[derive(Debug)]
-pub enum InnerBlockData {
-    STREAMINFO(StreamInfo),
-    VORBIS_COMMENT(VorbisComment)
+pub enum BlockData {
+    StreamInfo(StreamInfo),
+    VorbisComment(VorbisComment),
+    Picture(Picture)
 }
 
 pub struct MetadataBlock {
@@ -49,13 +32,13 @@ pub struct BlockHeader {
     pub len: u32
 }
 
-pub struct BlockData(InnerBlockData);
-impl Deref for BlockData {
-    type Target = InnerBlockData;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+// pub struct BlockData(InnerBlockData);
+// impl Deref for BlockData {
+//     type Target = InnerBlockData;
+//     fn deref(&self) -> &Self::Target {
+//         &self.0
+//     }
+// }
 
 impl BlockHeader {
     pub fn parse(mut buf: Vec<u8>) -> BlockHeader {
@@ -79,10 +62,10 @@ impl BlockData {
             }
         };
 
-        BlockData(block)
+        block
     }
 
-    fn _parse_stream_info(buf: Vec<u8>) -> InnerBlockData {
+    fn _parse_stream_info(buf: Vec<u8>) -> BlockData {
         let min_block_size = u16::from_be_bytes(buf[0..2].try_into().unwrap());
         let max_block_size = u16::from_be_bytes(buf[2..4].try_into().unwrap());
 
@@ -110,7 +93,7 @@ impl BlockData {
         let md5 = u128::from_be_bytes(buf[18..34].try_into().unwrap());
         // dbg!(min_block_size, max_block_size, min_frame_size, max_frame_size, sample_rate, channels, bits_per_sample, samples, md5);
 
-        InnerBlockData::STREAMINFO(StreamInfo {
+        BlockData::StreamInfo(StreamInfo {
             min_block_size,
             max_block_size,
             min_frame_size,
@@ -122,7 +105,7 @@ impl BlockData {
             md5
         })
     }
-    fn _parse_vorbis_comment(buf: Vec<u8>) -> InnerBlockData {
+    fn _parse_vorbis_comment(buf: Vec<u8>) -> BlockData {
         let vendor_length = u32::from_le_bytes(buf[0..4].try_into().unwrap());
         // println!("{vendor_length}");
         let vendor_string = String::from_utf8(buf[4..(vendor_length + 4) as usize].to_vec()).unwrap();
@@ -147,10 +130,14 @@ impl BlockData {
             off += 4 + comment_len;
         }
         
-        dbg!(InnerBlockData::VORBIS_COMMENT(VorbisComment { 
+        BlockData::VorbisComment(VorbisComment { 
             vendor_string , 
             comments 
-        }))
+        })
+    }
+    fn _parse_picture(buf: Vec<u8>) -> BlockData {
+
+        todo!()
     }
 }
 

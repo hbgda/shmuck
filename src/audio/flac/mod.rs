@@ -1,4 +1,5 @@
 pub mod block;
+pub mod meta;
 
 use std::{io::{Read, self}, error::Error, fs, ops::{Deref, DerefMut}};
 
