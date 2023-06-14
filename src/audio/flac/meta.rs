@@ -2,23 +2,24 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct StreamInfo {
-    min_block_size: u16,
-    max_block_size: u16,
-    min_frame_size: u32,
-    max_frame_size: u32,
-    sample_rate: u32,
-    channels: u8,
-    bits_per_sample: u8,
-    samples: u64,
-    md5: u128
+    pub min_block_size: u16,
+    pub max_block_size: u16,
+    pub min_frame_size: u32,
+    pub max_frame_size: u32,
+    pub sample_rate: u32,
+    pub channels: u8,
+    pub bits_per_sample: u8,
+    pub samples: u64,
+    pub md5: u128
 }
 
 #[derive(Debug)]
 pub struct VorbisComment {
-    vendor_string: String,
-    comments: HashMap<String, Vec<String>>
+    pub vendor_string: String,
+    pub comments: HashMap<String, Vec<String>>
 }
 
+#[derive(Debug)]
 pub enum PictureType {
     Other,
     FileIcon,
@@ -45,5 +46,5 @@ pub enum PictureType {
 
 #[derive(Debug)]
 pub struct Picture {
-    picture_type
+    pub picture_type: PictureType
 }
