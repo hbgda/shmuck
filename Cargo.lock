@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "pluck_server"
+name = "shmuck"
 version = "0.1.0"
