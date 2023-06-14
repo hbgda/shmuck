@@ -46,5 +46,12 @@ pub enum PictureType {
 
 #[derive(Debug)]
 pub struct Picture {
-    pub picture_type: PictureType
+    pub picture_type: PictureType,
+    pub mime_type: String,
+    pub description: String,
+    pub width: u32,
+    pub height: u32,
+    pub depth: u32,
+    pub colour_count: u32,
+    pub buffer: Vec<u8>
 }
