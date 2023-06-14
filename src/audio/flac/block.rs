@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, collections::HashMap};
 
 #[derive(Debug, Clone, Copy)]
 pub enum BlockType {
@@ -12,6 +12,7 @@ pub enum BlockType {
     RESERVED
 }
 
+#[derive(Debug)]
 pub struct StreamInfo {
     min_block_size: u16,
     max_block_size: u16,
@@ -24,8 +25,16 @@ pub struct StreamInfo {
     md5: u128
 }
 
+#[derive(Debug)]
+pub struct VorbisComment {
+    vendor_string: String,
+    comments: HashMap<String, Vec<String>>
+}
+
+#[derive(Debug)]
 pub enum InnerBlockData {
-    STREAMINFO(StreamInfo)
+    STREAMINFO(StreamInfo),
+    VORBIS_COMMENT(VorbisComment)
 }
 
 pub struct MetadataBlock {
@@ -62,9 +71,8 @@ impl BlockHeader {
 impl BlockData {
     pub fn parse(buf: Vec<u8>, block_type: BlockType) -> BlockData {
         let block = match block_type {
-            BlockType::STREAMINFO => {
-                BlockData::_parse_stream_info(buf)
-            }
+            BlockType::STREAMINFO =>        BlockData::_parse_stream_info(buf),
+            BlockType::VORBIS_COMMENT =>    BlockData::_parse_vorbis_comment(buf),
             _ => {
                 // println!()
                 todo!()
@@ -113,6 +121,36 @@ impl BlockData {
             samples,
             md5
         })
+    }
+    fn _parse_vorbis_comment(buf: Vec<u8>) -> InnerBlockData {
+        let vendor_length = u32::from_le_bytes(buf[0..4].try_into().unwrap());
+        // println!("{vendor_length}");
+        let vendor_string = String::from_utf8(buf[4..(vendor_length + 4) as usize].to_vec()).unwrap();
+        // println!("{vendor_string}");
+        let mut off = (vendor_length + 4) as usize;
+        let comments_len = u32::from_le_bytes(buf[off..off + 4].try_into().unwrap());
+        // println!("{comment_len}");
+        off += 4;
+        let mut comments = HashMap::new();
+        for _ in 0..comments_len as usize {
+            let comment_len = u32::from_le_bytes(buf[off..off + 4].try_into().unwrap()) as usize;
+            let comment_string = String::from_utf8(buf[off + 4..off + 4 + comment_len].try_into().unwrap()).unwrap();
+            // println!("{comment_len} {comment_string}");
+            let parts: Vec<&str> = comment_string.split("=").collect();
+            comments.entry(parts[0].to_string())
+                .and_modify(|e: &mut Vec<String>| 
+                    e.push(parts[1].to_string())
+                )
+                .or_insert(
+                    Vec::from([parts[1].to_string()])
+                );
+            off += 4 + comment_len;
+        }
+        
+        dbg!(InnerBlockData::VORBIS_COMMENT(VorbisComment { 
+            vendor_string , 
+            comments 
+        }))
     }
 }
 
