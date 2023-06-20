@@ -3,14 +3,14 @@ use super::meta::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum BlockType {
-    STREAMINFO,
-    PADDING,
-    APPLICATION,
-    SEEKTABLE,
-    VORBIS_COMMENT,
-    CUESHEET,
-    PICTURE,
-    RESERVED
+    StreamInfo,
+    Padding,
+    Application,
+    Seektable,
+    VorbisComment,
+    Cuesheet,
+    Picture,
+    Reserved
 }
 
 #[derive(Debug)]
@@ -54,8 +54,9 @@ impl BlockHeader {
 impl BlockData {
     pub fn parse(buf: Vec<u8>, block_type: BlockType) -> BlockData {
         let block = match block_type {
-            BlockType::STREAMINFO =>        BlockData::_parse_stream_info(buf),
-            BlockType::VORBIS_COMMENT =>    BlockData::_parse_vorbis_comment(buf),
+            BlockType::StreamInfo =>        BlockData::_parse_stream_info(buf),
+            BlockType::VorbisComment =>     BlockData::_parse_vorbis_comment(buf),
+            BlockType::Picture =>           BlockData::_parse_picture(buf),
             _ => {
                 // println!()
                 todo!()
@@ -105,6 +106,7 @@ impl BlockData {
             md5
         })
     }
+
     fn _parse_vorbis_comment(buf: Vec<u8>) -> BlockData {
         let vendor_length = u32::from_le_bytes(buf[0..4].try_into().unwrap());
         // println!("{vendor_length}");
@@ -131,12 +133,14 @@ impl BlockData {
         }
         
         BlockData::VorbisComment(VorbisComment { 
-            vendor_string , 
+            vendor_string, 
             comments 
         })
     }
-    fn _parse_picture(buf: Vec<u8>) -> BlockData {
 
+    fn _parse_picture(buf: Vec<u8>) -> BlockData {
+        let picture_type: PictureType = u32::from_be_bytes(buf[0..4].try_into().unwrap()).into();
+        dbg!(picture_type);
         todo!()
     }
 }
@@ -144,14 +148,14 @@ impl BlockData {
 impl From<u8> for BlockType {
     fn from(value: u8) -> Self {
         match value {
-            0 => BlockType::STREAMINFO,
-            1 => BlockType::PADDING,
-            2 => BlockType::APPLICATION,
-            3 => BlockType::SEEKTABLE,
-            4 => BlockType::VORBIS_COMMENT,
-            5 => BlockType::CUESHEET,
-            6 => BlockType::PICTURE,
-            _ => BlockType::RESERVED
+            0 => BlockType::StreamInfo,
+            1 => BlockType::Padding,
+            2 => BlockType::Application,
+            3 => BlockType::Seektable,
+            4 => BlockType::VorbisComment,
+            5 => BlockType::Cuesheet,
+            6 => BlockType::Picture,
+            _ => BlockType::Reserved
         }
     }
 }

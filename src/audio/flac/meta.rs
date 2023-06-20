@@ -1,6 +1,9 @@
+//! Reference: https://xiph.org/flac/format.html
+
 use std::collections::HashMap;
 
 #[derive(Debug)]
+/// https://xiph.org/flac/format.html#metadata_block_streaminfo
 pub struct StreamInfo {
     pub min_block_size: u16,
     pub max_block_size: u16,
@@ -14,6 +17,7 @@ pub struct StreamInfo {
 }
 
 #[derive(Debug)]
+/// https://xiph.org/flac/format.html#metadata_block_vorbis_comment
 pub struct VorbisComment {
     pub vendor_string: String,
     pub comments: HashMap<String, Vec<String>>
@@ -41,10 +45,12 @@ pub enum PictureType {
     Fish,
     Illustration,
     ArtistLogo,
-    StudioLogo
+    StudioLogo,
+    Reserved
 }
 
 #[derive(Debug)]
+/// https://xiph.org/flac/format.html#metadata_block_picture
 pub struct Picture {
     pub picture_type: PictureType,
     pub mime_type: String,
@@ -54,4 +60,33 @@ pub struct Picture {
     pub depth: u32,
     pub colour_count: u32,
     pub buffer: Vec<u8>
+}
+
+impl From<u32> for PictureType {
+    fn from(value: u32) -> Self {
+        match value {
+            0 => PictureType::Other,
+            1 => PictureType::FileIcon,
+            2 => PictureType::OtherFileIcon,
+            3 => PictureType::CoverFront,
+            4 => PictureType::CoverBack,
+            5 => PictureType::Leaflet,
+            6 => PictureType::Media,
+            7 => PictureType::Lead,
+            8 => PictureType::Artist,
+            9 => PictureType::Conductor,
+            10 => PictureType::Band,
+            11 => PictureType::Composer,
+            12 => PictureType::Lyricist,
+            13 => PictureType::Location,
+            14 => PictureType::Recording,
+            15 => PictureType::Performance,
+            16 => PictureType::MovieCapture,
+            17 => PictureType::Fish,
+            18 => PictureType::Illustration,
+            19 => PictureType::ArtistLogo,
+            20 => PictureType::StudioLogo,
+            _ => PictureType::Reserved
+        }
+    }
 }
