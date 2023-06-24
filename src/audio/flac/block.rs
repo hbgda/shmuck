@@ -143,7 +143,7 @@ impl BlockData {
             println!("Comment: {comment_len} {comment_string}");
         
             let parts: Vec<&str> = comment_string.split("=").collect();
-            comments.entry(parts[0].to_string())
+            comments.entry(parts[0].to_string().to_lowercase())
                 .and_modify(|e: &mut Vec<String>| 
                     e.push(parts[1].to_string())
                 )

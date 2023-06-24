@@ -33,6 +33,19 @@ pub struct VorbisComment {
     pub comments: HashMap<String, Vec<String>>
 }
 
+#[derive(Debug, Clone)]
+/// https://xiph.org/flac/format.html#metadata_block_picture
+pub struct Picture {
+    pub picture_type: PictureType,
+    pub mime_type: String,
+    pub description: String,
+    pub width: u32,
+    pub height: u32,
+    pub colour_depth: u32,
+    pub colour_count: u32,
+    pub buffer: Vec<u8>
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum PictureType {
     Other,
@@ -57,19 +70,6 @@ pub enum PictureType {
     ArtistLogo,
     StudioLogo,
     Reserved
-}
-
-#[derive(Debug, Clone)]
-/// https://xiph.org/flac/format.html#metadata_block_picture
-pub struct Picture {
-    pub picture_type: PictureType,
-    pub mime_type: String,
-    pub description: String,
-    pub width: u32,
-    pub height: u32,
-    pub colour_depth: u32,
-    pub colour_count: u32,
-    pub buffer: Vec<u8>
 }
 
 impl From<u32> for PictureType {

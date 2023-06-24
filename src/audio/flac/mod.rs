@@ -31,9 +31,7 @@ impl FlacStream {
 }
 
 pub struct Flac {
-    stream: FlacStream,
-    block_locs: HashMap<BlockType, usize>,
-    blocks: Vec<MetadataBlock>
+    blocks: HashMap<BlockType, MetadataBlock>
 }
 
 impl Flac {
@@ -42,36 +40,37 @@ impl Flac {
             return Err("File not FLAC.".into())
         }
 
-        let mut loc = 4usize;
-        let mut block_locs = HashMap::new();
+        let mut blocks = HashMap::new();
         loop {
-            let header_buf = stream.read(4);
-            let header = BlockHeader::parse(header_buf);
-            block_locs.insert(header.block_type, loc);
-            if header.last_block {
+            let block = Flac::parse_block(&mut stream)?;
+            blocks.insert(block.header.block_type, block.clone());
+            if block.header.last_block {
                 break;
             }
-            loc = stream.seek(SeekFrom::Current(header.len as i64))? as usize;
         }
-        
-        Ok(Flac { stream, block_locs, blocks: Vec::new() })
+
+        Ok(Flac { blocks })
     }
 
-    pub fn get_block(&mut self, block_type: BlockType) -> Option<MetadataBlock> {
-        if let Some(block) = self.blocks.iter().find(|b| b.header.block_type == block_type) {
-            return Some(block.clone());
-        }
-        let index = self.block_locs.get(&block_type)?;
-        if let Err(_) = self.stream.seek(SeekFrom::Start(*index as u64)) {
-            return None;
-        }
-        let block = Flac::parse_block(&mut self.stream);
-        if let Err(_) = block {
-            return None;
-        }
-        let block = block.unwrap();
-        self.blocks.push(block.clone());
-        return Some(block);
+    // pub fn get_block(&mut self, block_type: BlockType) -> Option<MetadataBlock> {
+    //     if let Some(block) = self.blocks.iter().find(|b| b.header.block_type == block_type) {
+    //         return Some(block.clone());
+    //     }
+    //     let index = self.block_locs.get(&block_type)?;
+    //     if let Err(_) = self.stream.seek(SeekFrom::Start(*index as u64)) {
+    //         return None;
+    //     }
+    //     let block = Flac::parse_block(&mut self.stream);
+    //     if let Err(_) = block {
+    //         return None;
+    //     }
+    //     let block = block.unwrap();
+    //     self.blocks.push(block.clone());
+    //     return Some(block);
+    // }
+
+    pub fn get_block(&self, block_type: BlockType) -> Option<MetadataBlock> {
+        Some(self.blocks.get(&block_type)?.clone())
     }
 
     fn parse_block(stream: &mut FlacStream) -> Result<MetadataBlock, Box<dyn Error>> {
@@ -88,5 +87,14 @@ impl Flac {
         Ok(MetadataBlock {
             header, data
         })
+    }
+}
+
+impl Flac {
+    pub fn title(&mut self) -> Option<String> {
+        let block = self.get_block(BlockType::VorbisComment)?;
+        let BlockData::VorbisComment(v) = block.data else { return None };
+        let title = v.comments.get("title")?;
+        Some(title.first()?.clone())
     }
 }

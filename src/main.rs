@@ -11,4 +11,5 @@ fn main() {
 
 
     dbg!(flac.get_block(BlockType::StreamInfo));
+    println!("Title: {}", flac.title().unwrap())
 }
