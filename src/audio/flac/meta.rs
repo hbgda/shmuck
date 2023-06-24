@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, ops::Deref};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// https://xiph.org/flac/format.html#metadata_block_streaminfo
 pub struct StreamInfo {
     pub min_block_size: u16,
@@ -16,7 +16,7 @@ pub struct StreamInfo {
     pub md5: Vec<u8>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 /// https://xiph.org/flac/format.html#metadata_block_padding
 pub struct Padding(usize);
 impl Deref for Padding {
@@ -26,7 +26,7 @@ impl Deref for Padding {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// https://xiph.org/flac/format.html#metadata_block_vorbis_comment
 pub struct VorbisComment {
     pub vendor_string: String,
@@ -59,7 +59,7 @@ pub enum PictureType {
     Reserved
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// https://xiph.org/flac/format.html#metadata_block_picture
 pub struct Picture {
     pub picture_type: PictureType,

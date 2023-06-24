@@ -57,44 +57,21 @@ impl Flac {
         Ok(Flac { stream, block_locs, blocks: Vec::new() })
     }
 
-    pub fn get_block(&mut self, block: BlockType) -> Option<MetadataBlock> {
-        if let Some(index) = self.block_locs.get(&block) {
-            if let Err(_) = self.stream.seek(SeekFrom::Start(*index as u64)) {
-                return None;
-            }
-            let block = Flac::parse_block(&mut self.stream);
-            if let Err(_) = block {
-                return None;
-            }
-            return Some(block.unwrap())
+    pub fn get_block(&mut self, block_type: BlockType) -> Option<MetadataBlock> {
+        if let Some(block) = self.blocks.iter().find(|b| b.header.block_type == block_type) {
+            return Some(block.clone());
         }
-        None
-    }
-
-    pub fn load(mut stream: FlacStream) -> Result<Flac, Box<dyn Error>> {
-        let magic_buf = stream.read(4);
-        let magic_buf = dbg!(magic_buf);
-        if magic_buf != [0x66, 0x4C, 0x61, 0x43] {
-            return Err("Provided file is not FLAC.".into());
+        let index = self.block_locs.get(&block_type)?;
+        if let Err(_) = self.stream.seek(SeekFrom::Start(*index as u64)) {
+            return None;
         }
-        println!("Is FLAC");
-        loop { 
-            let block = Flac::parse_block(&mut stream)?;
-
-            // Do something
-
-            if block.header.last_block {
-                break;
-            }
+        let block = Flac::parse_block(&mut self.stream);
+        if let Err(_) = block {
+            return None;
         }
-        // Flac::parse_block(&mut stream);
-        // Flac::parse_block(&mut stream);
-        // Flac::parse_block(&mut stream);
-        // Flac::parse_block(&mut stream);
-        // Flac::parse_block(&mut stream);
-        // todo!()
-        // Ok(Flac { stream })
-        todo!()
+        let block = block.unwrap();
+        self.blocks.push(block.clone());
+        return Some(block);
     }
 
     fn parse_block(stream: &mut FlacStream) -> Result<MetadataBlock, Box<dyn Error>> {

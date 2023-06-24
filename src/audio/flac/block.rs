@@ -13,7 +13,7 @@ pub enum BlockType {
     Reserved 
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BlockData {
     StreamInfo(StreamInfo),
     Application,
@@ -24,13 +24,13 @@ pub enum BlockData {
     Picture(Picture),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MetadataBlock {
     pub header: BlockHeader,
     pub data: BlockData
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BlockHeader {
     pub last_block: bool,
     pub block_type: BlockType,
