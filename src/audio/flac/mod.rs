@@ -3,7 +3,7 @@ pub mod meta;
 
 use std::{io::{Read, self}, error::Error, fs, ops::{Deref, DerefMut}};
 
-use self::block::{BlockHeader, BlockData, MetadataBlock};
+use self::block::{BlockHeader, BlockData, MetadataBlock, BlockType};
 
 
 pub struct Flac {
@@ -43,19 +43,34 @@ impl Flac {
             return Err("Provided file is not FLAC.".into());
         }
         println!("Is FLAC");
+        loop { 
+            let block = Flac::parse_block(&mut stream)?;
 
-        Flac::parse_block(&mut stream);
-        Flac::parse_block(&mut stream);
-        Flac::parse_block(&mut stream);
-        todo!()
+            // Do something
+
+            if block.header.last_block {
+                break;
+            }
+        }
+        // Flac::parse_block(&mut stream);
+        // Flac::parse_block(&mut stream);
+        // Flac::parse_block(&mut stream);
+        // Flac::parse_block(&mut stream);
+        // Flac::parse_block(&mut stream);
+        // todo!()
+        Ok(Flac { buffer: vec![] })
     }
 
     fn parse_block(stream: &mut FlacStream) -> Result<MetadataBlock, Box<dyn Error>> {
         let header_buf = stream.read(4);
         let header = BlockHeader::parse(header_buf);
+        if header.block_type == BlockType::Padding {
+            _ = stream.read(header.len as usize);
+            return Ok(MetadataBlock { header, data: BlockData::Padding })
+        }
         
         let data_buf = stream.read(header.len as usize);
-        let data = BlockData::parse(data_buf, header.block_type);
+        let data = BlockData::parse(data_buf, header.block_type)?;
 
         Ok(MetadataBlock {
             header, data

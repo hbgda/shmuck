@@ -1,6 +1,6 @@
 //! Reference: https://xiph.org/flac/format.html
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Deref};
 
 #[derive(Debug)]
 /// https://xiph.org/flac/format.html#metadata_block_streaminfo
@@ -13,7 +13,17 @@ pub struct StreamInfo {
     pub channels: u8,
     pub bits_per_sample: u8,
     pub samples: u64,
-    pub md5: u128
+    pub md5: Vec<u8>
+}
+
+#[derive(Debug)]
+/// https://xiph.org/flac/format.html#metadata_block_padding
+pub struct Padding(usize);
+impl Deref for Padding {
+    type Target = usize;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 #[derive(Debug)]
