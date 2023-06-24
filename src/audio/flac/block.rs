@@ -1,16 +1,16 @@
 use std::{ops::Deref, collections::HashMap, error::Error};
 use super::meta::*;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BlockType {
-    StreamInfo,
-    Application,
-    Padding,
-    Seektable,
-    VorbisComment,
-    Cuesheet,
-    Picture,
-    Reserved
+    StreamInfo,     // Done
+    Application,    // 
+    Padding,        // Done
+    Seektable,      //
+    VorbisComment,  // Done
+    Cuesheet,       // 
+    Picture,        // Done
+    Reserved 
 }
 
 #[derive(Debug)]
@@ -24,6 +24,7 @@ pub enum BlockData {
     Picture(Picture),
 }
 
+#[derive(Debug)]
 pub struct MetadataBlock {
     pub header: BlockHeader,
     pub data: BlockData

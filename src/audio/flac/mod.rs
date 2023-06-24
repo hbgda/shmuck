@@ -1,14 +1,9 @@
 pub mod block;
 pub mod meta;
 
-use std::{io::{Read, self}, error::Error, fs, ops::{Deref, DerefMut}};
+use std::{io::{Read, self, Seek, SeekFrom}, error::Error, fs, ops::{Deref, DerefMut}, collections::HashMap};
 
 use self::block::{BlockHeader, BlockData, MetadataBlock, BlockType};
-
-
-pub struct Flac {
-    buffer: Vec<u8>
-}
 
 pub struct FlacStream(fs::File);
 impl Deref for FlacStream {
@@ -35,7 +30,47 @@ impl FlacStream {
     }
 }
 
+pub struct Flac {
+    stream: FlacStream,
+    block_locs: HashMap<BlockType, usize>,
+    blocks: Vec<MetadataBlock>
+}
+
 impl Flac {
+    pub fn new(mut stream: FlacStream) -> Result<Flac, Box<dyn Error>> {
+        if stream.read(4) != [0x66, 0x4c, 0x61, 0x43] {
+            return Err("File not FLAC.".into())
+        }
+
+        let mut loc = 4usize;
+        let mut block_locs = HashMap::new();
+        loop {
+            let header_buf = stream.read(4);
+            let header = BlockHeader::parse(header_buf);
+            block_locs.insert(header.block_type, loc);
+            if header.last_block {
+                break;
+            }
+            loc = stream.seek(SeekFrom::Current(header.len as i64))? as usize;
+        }
+        
+        Ok(Flac { stream, block_locs, blocks: Vec::new() })
+    }
+
+    pub fn get_block(&mut self, block: BlockType) -> Option<MetadataBlock> {
+        if let Some(index) = self.block_locs.get(&block) {
+            if let Err(_) = self.stream.seek(SeekFrom::Start(*index as u64)) {
+                return None;
+            }
+            let block = Flac::parse_block(&mut self.stream);
+            if let Err(_) = block {
+                return None;
+            }
+            return Some(block.unwrap())
+        }
+        None
+    }
+
     pub fn load(mut stream: FlacStream) -> Result<Flac, Box<dyn Error>> {
         let magic_buf = stream.read(4);
         let magic_buf = dbg!(magic_buf);
@@ -58,7 +93,8 @@ impl Flac {
         // Flac::parse_block(&mut stream);
         // Flac::parse_block(&mut stream);
         // todo!()
-        Ok(Flac { buffer: vec![] })
+        // Ok(Flac { stream })
+        todo!()
     }
 
     fn parse_block(stream: &mut FlacStream) -> Result<MetadataBlock, Box<dyn Error>> {
@@ -75,9 +111,5 @@ impl Flac {
         Ok(MetadataBlock {
             header, data
         })
-    }
-
-    fn load_metadata(&mut self) {
-
     }
 }
