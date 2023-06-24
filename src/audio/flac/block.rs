@@ -119,7 +119,7 @@ impl BlockData {
         let mut comments = HashMap::new();
         for _ in 0..comments_len as usize {
             let comment_len = u32::from_le_bytes(buf[off..off + 4].try_into().unwrap()) as usize;
-            let comment_string = String::from_utf8(buf[off + 4..off + 4 + comment_len].try_into().unwrap()).unwrap();
+            let comment_string = String::from_utf8(buf[off + 4..off + 4 + comment_len].to_vec()).unwrap();
             // println!("{comment_len} {comment_string}");
             let parts: Vec<&str> = comment_string.split("=").collect();
             comments.entry(parts[0].to_string())
@@ -140,8 +140,55 @@ impl BlockData {
 
     fn _parse_picture(buf: Vec<u8>) -> BlockData {
         let picture_type: PictureType = u32::from_be_bytes(buf[0..4].try_into().unwrap()).into();
-        dbg!(picture_type);
-        todo!()
+        println!("Picture Type: {picture_type:?}");
+        // let picture_type = dbg!(picture_type);
+
+        let mime_type_len = u32::from_be_bytes(buf[4..8].try_into().unwrap()) as usize;
+        println!("MIME Type Len: {mime_type_len}");
+        let mime_type = String::from_utf8(buf[8..8 + mime_type_len].to_vec()).unwrap();
+        println!("MIME Type: {}", mime_type.clone());
+
+
+        let mut off = 8 + mime_type_len;
+
+        let desc_len = u32::from_be_bytes(buf[off..off + 4].try_into().unwrap()) as usize;
+        println!("Description Len: {desc_len}");
+        off += 4;
+
+        let description = String::from_utf8(buf[off..off + desc_len].to_vec()).unwrap();
+        println!("Description: {}", description.clone());
+        off += desc_len;
+
+        let width = u32::from_be_bytes(buf[off..off + 4].try_into().unwrap());
+        off += 4;
+        let height = u32::from_be_bytes(buf[off..off + 4].try_into().unwrap());
+        println!("Size: {width} x {height}");
+        off += 4;
+
+        let colour_depth = u32::from_be_bytes(buf[off..off + 4].try_into().unwrap());
+        println!("Depth: {colour_depth}");
+        off += 4;
+
+        let colour_count = u32::from_be_bytes(buf[off..off + 4].try_into().unwrap());
+        println!("Colour Count: {colour_count}");
+        off += 4;
+
+        let picture_len = u32::from_be_bytes(buf[off..off + 4].try_into().unwrap()) as usize;
+        println!("Picture Len: {picture_len}");
+        off += 4;
+
+        let buffer = buf[off..off + picture_len].to_vec();
+        
+        BlockData::Picture(Picture {
+            picture_type,
+            mime_type,
+            description,
+            width,
+            height,
+            colour_depth,
+            colour_count,
+            buffer
+        })
     }
 }
 

@@ -23,7 +23,7 @@ pub struct VorbisComment {
     pub comments: HashMap<String, Vec<String>>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum PictureType {
     Other,
     FileIcon,
@@ -57,7 +57,7 @@ pub struct Picture {
     pub description: String,
     pub width: u32,
     pub height: u32,
-    pub depth: u32,
+    pub colour_depth: u32,
     pub colour_count: u32,
     pub buffer: Vec<u8>
 }
