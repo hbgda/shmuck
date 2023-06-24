@@ -1,11 +1,9 @@
 use std::fs::File;
 
-use crate::audio::flac::block::BlockType;
-
-pub mod audio;
+use shmuck::flac::{Flac, block::BlockType};
 
 fn main() {
-    let mut flac = audio::flac::Flac::new(
+    let mut flac = Flac::new(
         File::open("test_files/2.flac").unwrap().into()
     ).expect("Failed to read??");
 
