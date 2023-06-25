@@ -1,9 +1,11 @@
 pub mod block;
 pub mod meta;
 
-use std::{io::{Read, self, Seek, SeekFrom}, error::Error, fs, ops::{Deref, DerefMut}, collections::HashMap};
+use std::{io::Read, error::Error, fs, ops::{Deref, DerefMut}, collections::HashMap};
 
-use self::block::{BlockHeader, BlockData, MetadataBlock, BlockType};
+use crate::BasicMetadata;
+
+use self::{block::{BlockHeader, BlockData, MetadataBlock, BlockType}, meta::VorbisComment};
 
 pub struct FlacStream(fs::File);
 impl Deref for FlacStream {
@@ -31,6 +33,7 @@ impl FlacStream {
 }
 
 pub struct Flac {
+    pub meta: BasicMetadata,
     blocks: HashMap<BlockType, MetadataBlock>
 }
 
@@ -40,16 +43,22 @@ impl Flac {
             return Err("File not FLAC.".into())
         }
 
+        let mut meta = BasicMetadata { title: "".into(), artist: "".into(), album: None };
         let mut blocks = HashMap::new();
         loop {
             let block = Flac::parse_block(&mut stream)?;
+            if let BlockData::VorbisComment(v) = block.data.clone() {
+                if let Some(_meta) = v.into_meta() {
+                    meta = _meta;
+                }
+            }
             blocks.insert(block.header.block_type, block.clone());
             if block.header.last_block {
                 break;
             }
         }
 
-        Ok(Flac { blocks })
+        Ok(Flac { meta, blocks })
     }
 
     // pub fn get_block(&mut self, block_type: BlockType) -> Option<MetadataBlock> {
@@ -87,14 +96,5 @@ impl Flac {
         Ok(MetadataBlock {
             header, data
         })
-    }
-}
-
-impl Flac {
-    pub fn title(&mut self) -> Option<String> {
-        let block = self.get_block(BlockType::VorbisComment)?;
-        let BlockData::VorbisComment(v) = block.data else { return None };
-        let title = v.comments.get("title")?;
-        Some(title.first()?.clone())
     }
 }

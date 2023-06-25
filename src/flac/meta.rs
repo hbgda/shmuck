@@ -2,6 +2,8 @@
 
 use std::{collections::HashMap, ops::Deref};
 
+use crate::BasicMetadata;
+
 #[derive(Debug, Clone)]
 /// https://xiph.org/flac/format.html#metadata_block_streaminfo
 pub struct StreamInfo {
@@ -31,6 +33,19 @@ impl Deref for Padding {
 pub struct VorbisComment {
     pub vendor_string: String,
     pub comments: HashMap<String, Vec<String>>
+}
+
+impl VorbisComment {
+    pub fn into_meta(self) -> Option<BasicMetadata> {
+        let title = self.comments.get("title")?.first()?.clone();
+        let artist = self.comments.get("artist")?.first()?.clone();
+        let album = if let Some(album) = self.comments.get("album") {
+            Some(album.first().unwrap().clone())
+        } else { None };
+        Some(BasicMetadata {
+            title, artist, album
+        })
+    }
 }
 
 #[derive(Debug, Clone)]
