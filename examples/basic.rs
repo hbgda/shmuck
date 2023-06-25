@@ -1,6 +1,6 @@
 use std::fs::File;
 
-use shmuck::flac::{Flac, block::BlockType};
+use shmuck::{flac::{Flac, block::BlockType}, Metadata};
 
 fn main() {
     let flac = Flac::new(
@@ -9,5 +9,5 @@ fn main() {
 
 
     dbg!(flac.get_block(BlockType::StreamInfo));
-    println!("Meta: {:?}", flac.meta)
+    println!("Meta: {:?}", flac.metadata())
 }

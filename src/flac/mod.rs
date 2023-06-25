@@ -3,9 +3,9 @@ pub mod meta;
 
 use std::{io::Read, error::Error, fs, ops::{Deref, DerefMut}, collections::HashMap};
 
-use crate::BasicMetadata;
+use crate::{BasicMetadata, Cover, Metadata};
 
-use self::{block::{BlockHeader, BlockData, MetadataBlock, BlockType}, meta::VorbisComment};
+use self::{block::{BlockHeader, BlockData, MetadataBlock, BlockType}, meta::{VorbisComment, Picture}};
 
 pub struct FlacStream(fs::File);
 impl Deref for FlacStream {
@@ -33,7 +33,7 @@ impl FlacStream {
 }
 
 pub struct Flac {
-    pub meta: BasicMetadata,
+    meta: BasicMetadata,
     blocks: HashMap<BlockType, MetadataBlock>
 }
 
@@ -96,5 +96,30 @@ impl Flac {
         Ok(MetadataBlock {
             header, data
         })
+    }
+}
+
+impl Cover for Flac {
+    type CoverType = Option<Picture>;
+    fn cover(&self) -> Self::CoverType {
+        let BlockData::Picture(pic) = self.get_block(BlockType::Picture)?
+            .data else { return None };
+
+        Some(pic)
+    }
+}
+
+impl Metadata for Flac {
+    fn title(&self) -> Option<String> {
+        Some(self.meta.title.clone())
+    }
+    fn artist(&self) -> Option<String> {
+        Some(self.meta.artist.clone())
+    }
+    fn album(&self) -> Option<String> {
+        Some(self.meta.album.clone()?)
+    }
+    fn metadata(&self) -> Option<BasicMetadata> {
+        Some(self.meta.clone())
     }
 }
